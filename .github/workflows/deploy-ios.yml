@@ -30,7 +30,7 @@ jobs:
       - name: Package unsigned IPA
         run: |
           mkdir -p Payload
-          cp -r ios/build/Build/Products/Release-iphoneos/G\&G\ Mobile.app Payload/
+          cp -r ios/build/Build/Products/Release-iphoneos/GG\ Mobile.app Payload/
           zip -r G_Mobile.ipa Payload/
           rm -rf Payload
 
