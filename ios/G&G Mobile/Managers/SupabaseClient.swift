@@ -42,6 +42,10 @@ class SupabaseClient: NSObject {
                 let body = String(data: data, encoding: .utf8) ?? "unknown"
                 return .failure(.serverError("Server error \(httpResponse.statusCode): \(body)"))
             }
+            let body = String(data: data, encoding: .utf8) ?? ""
+            guard body != "null", !body.isEmpty else {
+                return .failure(.serverError("QR code expired or invalid"))
+            }
             let user = try JSONDecoder().decode(User.self, from: data)
             return .success(user)
         } catch {
