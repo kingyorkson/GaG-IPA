@@ -94,7 +94,7 @@ struct TourView: View {
                 ForEach(appState.friends.prefix(3)) { friend in
                     HStack {
                         Circle()
-                            .fill(Color(hex: friend.status.colorHex))
+                            .fill(Color(hex: (friend.status ?? .offline).colorHex))
                             .frame(width: 10, height: 10)
                         Text(friend.username)
                             .font(.subheadline)

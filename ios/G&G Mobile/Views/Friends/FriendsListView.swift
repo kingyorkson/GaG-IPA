@@ -65,7 +65,7 @@ struct FriendRowView: View {
             }
 
             Circle()
-                .fill(Color(hex: friend.status.colorHex))
+                .fill(Color(hex: (friend.status ?? .offline).colorHex))
                 .frame(width: 10, height: 10)
 
             VStack(alignment: .leading, spacing: 2) {
@@ -73,7 +73,7 @@ struct FriendRowView: View {
                     .font(.body)
                     .fontWeight(.semibold)
                     .foregroundColor(.white)
-                Text(friend.status.rawValue.capitalized)
+                Text((friend.status ?? .offline).rawValue.capitalized)
                     .font(.caption)
                     .foregroundColor(Color(hex: "888888"))
             }

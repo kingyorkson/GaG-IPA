@@ -75,7 +75,7 @@ struct PlayersListView: View {
                 ForEach(server.players) { player in
                     HStack {
                         Circle()
-                            .fill(Color(hex: player.status.colorHex))
+                            .fill(Color(hex: (player.status ?? .offline).colorHex))
                             .frame(width: 10, height: 10)
                         Text(player.username)
                             .foregroundColor(.white)
