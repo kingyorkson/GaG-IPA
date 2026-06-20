@@ -104,7 +104,7 @@ export class MenuScene extends Phaser.Scene {
     this.userBtn = null;
     this.profileBtn = null;
 
-    this.mobileQRBtn = new RecolorableButton(this, GAME_WIDTH - 160, GAME_HEIGHT - 50, 140, 35, 'Mobile Sign-In', COLORS.buttonGray, () => {
+    this.mobileQRBtn = new RecolorableButton(this, GAME_WIDTH - 160, GAME_HEIGHT - 50, 140, 35, 'Mobile Code', COLORS.buttonGray, () => {
       this.openQRCodeModal();
     });
   }
@@ -206,7 +206,7 @@ export class MenuScene extends Phaser.Scene {
   async openQRCodeModal() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      this.showMessage('Sign in first to link Mobile App');
+      this.showMessage('Sign in first to use Mobile Code');
       return;
     }
 
@@ -236,7 +236,7 @@ export class MenuScene extends Phaser.Scene {
       .insert({ code, user_id: user.id });
 
     if (insertError) {
-      this.showMessage('Failed to generate sign-in code');
+      this.showMessage('Failed to connect - try again');
       this.cleanupOverlay([overlay, panel, titleText]);
       return;
     }
