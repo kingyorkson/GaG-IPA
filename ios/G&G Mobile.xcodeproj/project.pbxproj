@@ -39,7 +39,7 @@
 		A10080 /* PlayMenuView.swift */ = {isa = PBXBuildFile; fileRef = B10080; };
 		A10081 /* ServerSelectionView.swift */ = {isa = PBXBuildFile; fileRef = B10081; };
 		A10090 /* SignInView.swift */ = {isa = PBXBuildFile; fileRef = B10090; };
-		A10091 /* QRScannerView.swift */ = {isa = PBXBuildFile; fileRef = B10091; };
+
 		A10100 /* AccountMenuView.swift */ = {isa = PBXBuildFile; fileRef = B10100; };
 		A10110 /* ColorExtensions.swift */ = {isa = PBXBuildFile; fileRef = B10110; };
 /* End PBXBuildFile section */
@@ -77,7 +77,7 @@
 		B10080 /* PlayMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayMenuView.swift; sourceTree = "<group>"; };
 		B10081 /* ServerSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerSelectionView.swift; sourceTree = "<group>"; };
 		B10090 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
-		B10091 /* QRScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRScannerView.swift; sourceTree = "<group>"; };
+
 		B10100 /* AccountMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountMenuView.swift; sourceTree = "<group>"; };
 		B10110 /* ColorExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorExtensions.swift; sourceTree = "<group>"; };
 		B10999 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -160,7 +160,7 @@
 		C10060 /* Call */ = { isa = PBXGroup; children = (B10060, B10061); path = Call; sourceTree = "<group>"; };
 		C10070 /* Servers */ = { isa = PBXGroup; children = (B10070, B10071); path = Servers; sourceTree = "<group>"; };
 		C10080 /* Play */ = { isa = PBXGroup; children = (B10080, B10081, B10072); path = Play; sourceTree = "<group>"; };
-		C10090 /* Auth */ = { isa = PBXGroup; children = (B10090, B10091); path = Auth; sourceTree = "<group>"; };
+		C10090 /* Auth */ = { isa = PBXGroup; children = (B10090); path = Auth; sourceTree = "<group>"; };
 		C10100 /* Settings */ = { isa = PBXGroup; children = (B10100); path = Settings; sourceTree = "<group>"; };
 		C10999 /* Products */ = {
 			isa = PBXGroup;
@@ -246,7 +246,7 @@
 				A10060, A10061,
 				A10070, A10071,
 				A10080, A10081, A10072,
-				A10090, A10091,
+				A10090,
 				A10100,
 				A10110,
 			);
