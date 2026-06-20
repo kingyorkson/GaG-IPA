@@ -51,11 +51,11 @@ export class AuthSystem {
   }
 
   async loginWithDiscord() {
+    const basePath = window.location.pathname.replace(/\/?$/, '');
+    const redirectTo = window.location.origin + basePath + '/auth/callback.html';
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'discord',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback.html`,
-      },
+      options: { redirectTo },
     });
     if (error) return { success: false, error: error.message };
     return { success: true, url: data.url };
