@@ -27,7 +27,10 @@ export class InAppBrowser {
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'discord',
-      options: { redirectTo: result.callbackUrl },
+      options: {
+        redirectTo: result.callbackUrl,
+        skipBrowserRedirect: true,
+      },
     });
     if (error || !data?.url) {
       window.electronAPI.closeAuthUrl();

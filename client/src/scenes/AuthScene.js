@@ -442,13 +442,20 @@ export class AuthScene extends Phaser.Scene {
     this.waitingForDiscord = true;
 
     if (this.browser.isElectron) {
-      const flow = await this.browser.startExternalFlow(supabase);
-      if (!flow.success) {
+      let flow;
+      try {
+        flow = await this.browser.startExternalFlow(supabase);
+        if (!flow.success) {
+          this.hideProgressBar();
+          this.showError(flow.error || 'Discord auth failed');
+          return;
+        }
+      } catch (e) {
         this.hideProgressBar();
-        this.showError(flow.error || 'Discord auth failed');
+        this.showError('Discord auth error: ' + (e?.message || 'unknown'));
         return;
       }
-      if (flow.hash) {
+      if (flow && flow.hash) {
         const q = new URLSearchParams(flow.hash.replace('#', '?'));
         const at = q.get('access_token');
         const rt = q.get('refresh_token');
