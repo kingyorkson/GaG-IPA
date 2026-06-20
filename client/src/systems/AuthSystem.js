@@ -55,7 +55,10 @@ export class AuthSystem {
     const redirectTo = overrideRedirectTo || (window.location.origin + basePath + '/auth/callback.html');
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'discord',
-      options: { redirectTo },
+      options: {
+        redirectTo,
+        skipBrowserRedirect: true,
+      },
     });
     if (error) return { success: false, error: error.message };
     return { success: true, url: data.url };

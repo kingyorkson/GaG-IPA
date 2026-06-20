@@ -463,16 +463,23 @@ export class AuthScene extends Phaser.Scene {
       return;
     }
 
-    const result = await this.authSystem.loginWithDiscord();
-    if (!result.success) {
+    try {
+      const result = await this.authSystem.loginWithDiscord();
+      if (!result.success) {
+        localStorage.removeItem('gag_discord_hash');
+        this.hideProgressBar();
+        this.showError(result.error || 'Failed to start Discord auth');
+        return;
+      }
+
+      localStorage.setItem('gag_discord_hash', 'waiting');
+      window.location.href = result.url;
+    } catch (e) {
       localStorage.removeItem('gag_discord_hash');
       this.hideProgressBar();
-      this.showError(result.error || 'Failed to start Discord auth');
+      this.showError('Error: ' + (e.message || 'Unknown error'));
       return;
     }
-
-    localStorage.setItem('gag_discord_hash', 'waiting');
-    window.location.href = result.url;
   }
 
   async handleDiscordCallback() {
