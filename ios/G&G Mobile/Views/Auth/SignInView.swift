@@ -3,7 +3,8 @@ import SwiftUI
 struct SignInView: View {
     @EnvironmentObject var appState: AppState
     @State private var showSignInMenu = false
-    @State private var showQRScanner = false
+    @State private var showCodeEntry = false
+    @State private var codeInput = ""
     @State private var isSigningIn = false
     @State private var showError = false
     @State private var errorMessage = ""
@@ -49,16 +50,50 @@ struct SignInView: View {
                 Button("Cancel", role: .cancel) {}
             }
 
-            Button(action: { showQRScanner = true }) {
-                HStack {
-                    Image(systemName: "qrcode.viewfinder")
-                    Text("Scan QR Code")
+            if showCodeEntry {
+                VStack(spacing: 12) {
+                    Text("Enter the 6-digit code shown on your PC")
+                        .font(.subheadline)
+                        .foregroundColor(Color(hex: "aaaaaa"))
+
+                    TextField("000000", text: $codeInput)
+                        .font(.system(size: 32, design: .monospaced))
+                        .multilineTextAlignment(.center)
+                        .keyboardType(.numberPad)
+                        .foregroundColor(.white)
+                        .frame(width: 200)
+                        .padding()
+                        .background(Color(hex: "1a1a2e"))
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color(hex: "4ecca3"), lineWidth: 1)
+                        )
+
+                    Button(action: submitCode) {
+                        Text("Sign In")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(codeInput.count == 6 ? Color(hex: "4ecca3") : Color.gray)
+                            .cornerRadius(14)
+                    }
+                    .disabled(codeInput.count != 6 || isSigningIn)
+                    .padding(.horizontal, 40)
                 }
-                .font(.subheadline)
-                .foregroundColor(Color(hex: "4ecca3"))
-                .padding(.vertical, 8)
+            } else {
+                Button(action: { showCodeEntry = true }) {
+                    HStack {
+                        Image(systemName: "number.circle.fill")
+                        Text("Enter Code")
+                    }
+                    .font(.subheadline)
+                    .foregroundColor(Color(hex: "4ecca3"))
+                    .padding(.vertical, 8)
+                }
+                .disabled(isSigningIn)
             }
-            .disabled(isSigningIn)
 
             if isSigningIn {
                 ProgressView()
@@ -69,39 +104,33 @@ struct SignInView: View {
             Spacer()
         }
         .background(Color(hex: "0f0f23").ignoresSafeArea())
-        .sheet(isPresented: $showQRScanner) {
-            QRScannerView { result in
-                switch result {
-                case .success(let token):
-                    isSigningIn = true
-                    Task {
-                        let authResult = await appState.authManager.signInWithQRCode(token: token)
-                        await MainActor.run {
-                            isSigningIn = false
-                            switch authResult {
-                            case .success:
-                                appState.isLoggedIn = true
-                                appState.currentUser = User(
-                                    id: appState.authManager.currentUserId ?? UUID().uuidString,
-                                    username: appState.authManager.currentUsername ?? "User",
-                                    status: .online
-                                )
-                            case .failure(let error):
-                                errorMessage = error.localizedDescription
-                                showError = true
-                            }
-                        }
-                    }
+        .alert("Error", isPresented: $showError) {
+            Button("OK") {}
+        } message: {
+            Text(errorMessage)
+        }
+    }
+
+    func submitCode() {
+        guard codeInput.count == 6 else { return }
+        isSigningIn = true
+        Task {
+            let authResult = await appState.authManager.signInWithCode(code: codeInput)
+            await MainActor.run {
+                isSigningIn = false
+                switch authResult {
+                case .success:
+                    appState.isLoggedIn = true
+                    appState.currentUser = User(
+                        id: appState.authManager.currentUserId ?? UUID().uuidString,
+                        username: appState.authManager.currentUsername ?? "User",
+                        status: .online
+                    )
                 case .failure(let error):
                     errorMessage = error.localizedDescription
                     showError = true
                 }
             }
-        }
-        .alert("Error", isPresented: $showError) {
-            Button("OK") {}
-        } message: {
-            Text(errorMessage)
         }
     }
 

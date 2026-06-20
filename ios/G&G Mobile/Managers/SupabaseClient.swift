@@ -23,14 +23,14 @@ class SupabaseClient: NSObject {
         }
     }
 
-    func authenticateWithQR(token: String) async -> Result<User, APIError> {
-        let url = URL(string: "\(baseURL)/rest/v1/rpc/authenticate_with_qr")!
+    func authenticateWithCode(code: String) async -> Result<User, APIError> {
+        let url = URL(string: "\(baseURL)/rest/v1/rpc/authenticate_with_code")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(anonKey, forHTTPHeaderField: "apikey")
         request.setValue("Bearer \(anonKey)", forHTTPHeaderField: "Authorization")
-        let body = ["token_text": token]
+        let body = ["code_text": code]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
         do {
@@ -44,7 +44,7 @@ class SupabaseClient: NSObject {
             }
             let body = String(data: data, encoding: .utf8) ?? ""
             guard body != "null", !body.isEmpty else {
-                return .failure(.serverError("QR code expired or invalid"))
+                return .failure(.serverError("Code expired or invalid"))
             }
             let user = try JSONDecoder().decode(User.self, from: data)
             return .success(user)

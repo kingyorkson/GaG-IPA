@@ -1,5 +1,4 @@
 import Foundation
-import AVFoundation
 
 class AuthManager: ObservableObject {
     @Published var isSignedIn = false
@@ -70,15 +69,15 @@ class AuthManager: ObservableObject {
         return true
     }
 
-    func signInWithQRCode(token: String) async -> Result<Void, SupabaseClient.APIError> {
-        let result = await supabase.authenticateWithQR(token: token)
+    func signInWithCode(code: String) async -> Result<Void, SupabaseClient.APIError> {
+        let result = await supabase.authenticateWithCode(code: code)
         switch result {
         case .success(let user):
             await MainActor.run {
                 self.currentUserId = user.id
                 self.currentUsername = user.username
                 self.isSignedIn = true
-                self.saveAccount(id: user.id, username: user.username, token: token)
+                self.saveAccount(id: user.id, username: user.username, token: code)
             }
             return .success(())
         case .failure(let error):

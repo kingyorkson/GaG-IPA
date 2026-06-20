@@ -5,7 +5,6 @@ import { AuthSystem } from '../systems/AuthSystem.js';
 import { SaveSystem } from '../systems/SaveSystem.js';
 import { NetworkSystem } from '../systems/NetworkSystem.js';
 import { supabase } from '../systems/SupabaseClient.js';
-import QRCode from 'qrcode';
 
 const DEPTH = {
   BG: 0,
@@ -105,7 +104,7 @@ export class MenuScene extends Phaser.Scene {
     this.userBtn = null;
     this.profileBtn = null;
 
-    this.mobileQRBtn = new RecolorableButton(this, GAME_WIDTH - 160, GAME_HEIGHT - 50, 140, 35, 'Mobile QR', COLORS.buttonGray, () => {
+    this.mobileQRBtn = new RecolorableButton(this, GAME_WIDTH - 160, GAME_HEIGHT - 50, 140, 35, 'Mobile Sign-In', COLORS.buttonGray, () => {
       this.openQRCodeModal();
     });
   }
@@ -207,7 +206,7 @@ export class MenuScene extends Phaser.Scene {
   async openQRCodeModal() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      this.showMessage('Sign in first to use Mobile QR');
+      this.showMessage('Sign in first to link Mobile App');
       return;
     }
 
@@ -216,7 +215,7 @@ export class MenuScene extends Phaser.Scene {
     overlay.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
     const pw = 400;
-    const ph = 420;
+    const ph = 360;
     const px = (GAME_WIDTH - pw) / 2;
     const py = (GAME_HEIGHT - ph) / 2;
 
@@ -226,52 +225,38 @@ export class MenuScene extends Phaser.Scene {
     panel.lineStyle(2, COLORS.tabletBorder, 1);
     panel.strokeRoundedRect(px, py, pw, ph, 15);
 
-    const titleText = this.add.text(GAME_WIDTH / 2, py + 25, 'Scan QR Code for Mobile App', {
+    const titleText = this.add.text(GAME_WIDTH / 2, py + 25, 'Mobile App Sign-In Code', {
       fontSize: '18px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(DEPTH.OVERLAY + 20);
 
-    const token = crypto.randomUUID();
+    const code = String(Math.floor(100000 + Math.random() * 900000));
 
     const { error: insertError } = await supabase
-      .from('qr_auth_tokens')
-      .insert({ token, user_id: user.id });
+      .from('auth_codes')
+      .insert({ code, user_id: user.id });
 
     if (insertError) {
-      this.showMessage('Failed to generate QR code');
+      this.showMessage('Failed to generate sign-in code');
       this.cleanupOverlay([overlay, panel, titleText]);
       return;
     }
 
-    const qrDataUrl = await QRCode.toDataURL(token, {
-        width: 320,
-        margin: 4,
-        color: { dark: '#000000', light: '#ffffff' },
-    });
+    const codeText = this.add.text(GAME_WIDTH / 2, py + 110, code, {
+      fontSize: '64px', color: '#4ecca3', fontFamily: 'Courier New', fontStyle: 'bold',
+      letterSpacing: 12,
+    }).setOrigin(0.5).setDepth(DEPTH.OVERLAY + 20);
 
-    const qrImg = this.add.image(GAME_WIDTH / 2, py + 170, 'qr_temp');
-    qrImg.setDepth(DEPTH.OVERLAY + 20);
-
-    const tempImg = new Image();
-    tempImg.src = qrDataUrl;
-    tempImg.onload = () => {
-      if (this.textures.exists('qr_temp')) this.textures.remove('qr_temp');
-      this.textures.addImage('qr_temp', tempImg);
-      qrImg.setTexture('qr_temp');
-        qrImg.setDisplaySize(260, 260);
-    };
-
-    const hint = this.add.text(GAME_WIDTH / 2, py + 300, 'Open G&G Mobile on your iPhone\nand tap Scan QR Code', {
+    const hint = this.add.text(GAME_WIDTH / 2, py + 180, 'Open G&G Mobile on your iPhone\nand enter this code', {
       fontSize: '14px', color: '#aaaaaa', fontFamily: 'Arial',
       align: 'center',
     }).setOrigin(0.5).setDepth(DEPTH.OVERLAY + 20);
 
-    const expireText = this.add.text(GAME_WIDTH / 2, py + 350, 'Expires in 5 minutes', {
+    const expireText = this.add.text(GAME_WIDTH / 2, py + 250, 'Expires in 5 minutes', {
       fontSize: '12px', color: '#888888', fontFamily: 'Arial',
     }).setOrigin(0.5).setDepth(DEPTH.OVERLAY + 20);
 
     const closeBtn = new RecolorableButton(this, px + pw - 50, py + 10, 35, 35, 'X', COLORS.danger, () => {
-      if (this.textures.exists('qr_temp')) this.textures.remove('qr_temp');
-      this.cleanupOverlay([overlay, panel, titleText, qrImg, hint, expireText, closeBtn]);
+      this.cleanupOverlay([overlay, panel, titleText, codeText, hint, expireText, closeBtn]);
     });
   }
 
