@@ -15,6 +15,16 @@ export class AuthSystem {
         }
         return { success: false, error: 'Invalid username or password' };
       }
+      if (data.user) {
+        await supabase.from('users').upsert({
+          id: data.user.id,
+          username,
+          auth_type: 'guest',
+          cash: 100,
+          inventory: [],
+          garden_data: {},
+        });
+      }
       return { success: true, user: this.formatUser(data.user) };
     } catch {
       return { success: false, error: 'Server unreachable' };
@@ -43,6 +53,16 @@ export class AuthSystem {
       }
       if (!data.session && data.user) {
         return { success: false, error: 'Account created but email confirmation is required. Ask an admin to disable "Confirm email" in Supabase Auth settings.' };
+      }
+      if (data.user) {
+        await supabase.from('users').upsert({
+          id: data.user.id,
+          username,
+          auth_type: 'guest',
+          cash: 100,
+          inventory: [],
+          garden_data: {},
+        });
       }
       return { success: true, user: this.formatUser(data.user) };
     } catch {

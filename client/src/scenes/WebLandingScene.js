@@ -61,16 +61,29 @@ export class WebLandingScene extends Phaser.Scene {
       this.startGame();
     });
 
-    new RecolorableButton(this, btnX, bounds.y + 225, btnW, btnH, 'Create Account', COLORS.buttonGray, () => {
-      this.openCreateAccount();
+    new RecolorableButton(this, btnX, bounds.y + 225, btnW, btnH, 'Sign In', COLORS.buttonGray, () => {
+      window.location.href = window.location.pathname.replace(/\/?$/, '') + '?mode=auth';
     });
 
-    this.add.text(cx, bounds.y + bounds.h - 30, 'Create an account to save your progress across devices.\nPlaying as guest saves locally only.', {
+    this.add.text(cx, bounds.y + bounds.h - 30, 'Sign in with Discord or a Guest account\nto save your progress across devices.', {
       fontSize: '11px', color: '#888888', fontFamily: 'Arial', align: 'center',
     }).setOrigin(0.5).setDepth(DEPTH.CONTENT);
   }
 
   async startGame() {
+    const discordHash = localStorage.getItem('gag_discord_hash');
+    if (discordHash && discordHash !== 'waiting') {
+      localStorage.removeItem('gag_discord_hash');
+      const q = new URLSearchParams(discordHash.replace('#', '?'));
+      const at = q.get('access_token');
+      const rt = q.get('refresh_token');
+      if (at && rt) {
+        await supabase.auth.setSession({ access_token: at, refresh_token: rt });
+      }
+      this.scene.start('AuthScene', { discordCallback: true });
+      return;
+    }
+
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
       const { data: profile } = await supabase
@@ -91,9 +104,5 @@ export class WebLandingScene extends Phaser.Scene {
       }
     }
     this.scene.start('PreloadScene');
-  }
-
-  openCreateAccount() {
-    window.open(window.location.origin + window.location.pathname + '?mode=auth', 'gag-auth', 'width=500,height=700');
   }
 }

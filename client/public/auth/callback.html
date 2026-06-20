@@ -18,7 +18,7 @@
         try {
           localStorage.setItem('gag_discord_hash', hash);
           document.getElementById('status').textContent = 'Stored session. Redirecting...';
-          var base = window.location.pathname.replace(/\/auth\/callback\.html$/, '') || '/';
+          var base = (window.location.pathname.replace(/\/auth\/callback\.html$/, '') || '/').replace(/\/?$/, '') + '/';
           setTimeout(function() { window.location.href = base; }, 1500);
         } catch(e) {
           document.getElementById('status').textContent = 'Error: ' + e.message;
