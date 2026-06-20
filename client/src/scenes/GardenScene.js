@@ -135,39 +135,26 @@ export class GardenScene extends Phaser.Scene {
   createUI() {
     this.gardenUI = this.add.container(0, 0).setDepth(DEPTH.UI);
 
-    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-
-    if (isTouchDevice) {
-      this.tabletBtn = new RecolorableButton(this, 10, 10, 90, 35, 'Tablet', COLORS.buttonGray, () => {
-        this.openTablet();
-      });
-    }
+    this.tabletBtn = new RecolorableButton(this, 10, 10, 90, 35, 'Tablet', COLORS.buttonGray, () => {
+      this.openTablet();
+    }, DEPTH.BUTTONS);
 
     if (this.mode !== 'single') {
       this.navLeftBtn = new RecolorableButton(this, 5, GAME_HEIGHT / 2 - 20, 40, 40, '<', COLORS.buttonGray, () => {
         this.navigateGarden(-1);
-      });
+      }, DEPTH.ARROWS);
       this.navRightBtn = new RecolorableButton(this, GAME_WIDTH - 45, GAME_HEIGHT / 2 - 20, 40, 40, '>', COLORS.buttonGray, () => {
         this.navigateGarden(1);
-      });
+      }, DEPTH.ARROWS);
     }
 
-    this.inventoryArrow = this.add.graphics().setDepth(DEPTH.UI_BG);
-    const arrowX = GAME_WIDTH / 2 - 25;
-    const arrowY = GAME_HEIGHT - 30;
-    this.inventoryArrow.fillStyle(COLORS.buttonGray, 0.8);
-    this.inventoryArrow.fillRoundedRect(arrowX, arrowY, 50, 25, 5);
-    const arrowZone = this.add.zone(GAME_WIDTH / 2, arrowY + 12, 50, 25)
-      .setInteractive({ useHandCursor: true }).setDepth(DEPTH.BUTTONS);
-    arrowZone.on('pointerdown', () => this.toggleInventory());
-    this.gardenUI.add(arrowZone);
-    const arrowLabel = this.add.text(GAME_WIDTH / 2, arrowY + 12, '▲', {
-      fontSize: '12px', color: '#ffffff', fontFamily: 'Arial',
-    }).setOrigin(0.5).setDepth(DEPTH.UI_BG);
+    this.invBtn = new RecolorableButton(this, GAME_WIDTH / 2 - 25, GAME_HEIGHT - 30, 50, 25, '▲', COLORS.buttonGray, () => {
+      this.toggleInventory();
+    }, DEPTH.BUTTONS);
 
     this.collectAllBtn = new RecolorableButton(this, GAME_WIDTH - 120, GAME_HEIGHT - 50, 110, 35, 'Collect All', COLORS.buttonGreen, () => {
       this.collectAllHarvest();
-    });
+    }, DEPTH.BUTTONS);
 
     this.cashText = this.add.text(GAME_WIDTH / 2, 15, `$${this.cash}`, {
       fontSize: '20px', color: '#ffd700', fontFamily: 'Arial', fontStyle: 'bold',

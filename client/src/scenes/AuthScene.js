@@ -24,10 +24,17 @@ export class AuthScene extends Phaser.Scene {
   }
 
   setupAuthListener() {
-    window.addEventListener('message', (event) => {
-      if (event.data?.type === 'supabase-auth') {
-        this.handleDiscordCallback();
+    window.addEventListener('message', async (event) => {
+      if (event.data?.type !== 'supabase-auth') return;
+      if (event.data.hash && event.origin === window.location.origin) {
+        const q = new URLSearchParams(event.data.hash.replace('#', '?'));
+        const at = q.get('access_token');
+        const rt = q.get('refresh_token');
+        if (at && rt) {
+          await supabase.auth.setSession({ access_token: at, refresh_token: rt });
+        }
       }
+      this.handleDiscordCallback();
     });
   }
 
@@ -288,23 +295,23 @@ export class AuthScene extends Phaser.Scene {
   async startDiscordAuth() {
     this.children.removeAll(true);
 
-    const overlay = this.add.graphics();
+    const overlay = this.add.graphics().setDepth(50);
     overlay.fillStyle(0x000000, 0.9);
     overlay.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
     this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 30, 'Opening Discord authorization...', {
       fontSize: '20px', color: '#ffffff', fontFamily: 'Arial',
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setDepth(50);
 
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 15, 'Please continue in the popup window.', {
+    const msg = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 15, 'A new tab will open. Complete login there, then return here.', {
       fontSize: '14px', color: '#aaaaaa', fontFamily: 'Arial',
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setDepth(50);
 
     this.showProgressBar('Waiting for Discord...');
 
     const result = await this.authSystem.loginWithDiscord();
     if (result.success) {
-      const popup = window.open(result.url, 'Discord Auth', 'width=600,height=700');
+      window.open(result.url, '_blank');
       this.waitingForDiscord = true;
     } else {
       this.hideProgressBar();
