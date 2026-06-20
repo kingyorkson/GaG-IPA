@@ -70,17 +70,20 @@ class AuthManager: ObservableObject {
         return true
     }
 
-    func signInWithQRCode(token: String) async -> Bool {
+    func signInWithQRCode(token: String) async -> Result<Void, String> {
         let result = await supabase.authenticateWithQR(token: token)
-        await MainActor.run {
-            if let user = result {
+        switch result {
+        case .success(let user):
+            await MainActor.run {
                 self.currentUserId = user.id
                 self.currentUsername = user.username
                 self.isSignedIn = true
                 self.saveAccount(id: user.id, username: user.username, token: token)
             }
+            return .success(())
+        case .failure(let error):
+            return .failure(error)
         }
-        return result != nil
     }
 
     func switchToAccount(_ account: StoredAccount) {

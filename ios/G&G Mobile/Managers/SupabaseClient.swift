@@ -14,7 +14,7 @@ class SupabaseClient: NSObject {
         case serverError(String)
     }
 
-    func authenticateWithQR(token: String) async -> User? {
+    func authenticateWithQR(token: String) async -> Result<User, String> {
         let url = URL(string: "\(baseURL)/rest/v1/rpc/authenticate_with_qr")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -24,11 +24,18 @@ class SupabaseClient: NSObject {
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
         do {
-            let (data, _) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                return .failure("Invalid server response")
+            }
+            guard httpResponse.statusCode == 200 else {
+                let body = String(data: data, encoding: .utf8) ?? "unknown"
+                return .failure("Server error \(httpResponse.statusCode): \(body)")
+            }
             let user = try JSONDecoder().decode(User.self, from: data)
-            return user
+            return .success(user)
         } catch {
-            return nil
+            return .failure(error.localizedDescription)
         }
     }
 

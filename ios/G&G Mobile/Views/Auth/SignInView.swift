@@ -73,8 +73,24 @@ struct SignInView: View {
             QRScannerView { result in
                 switch result {
                 case .success(let token):
+                    isSigningIn = true
                     Task {
-                        await appState.authManager.signInWithQRCode(token: token)
+                        let authResult = await appState.authManager.signInWithQRCode(token: token)
+                        await MainActor.run {
+                            isSigningIn = false
+                            switch authResult {
+                            case .success:
+                                appState.isLoggedIn = true
+                                appState.currentUser = User(
+                                    id: appState.authManager.currentUserId ?? UUID().uuidString,
+                                    username: appState.authManager.currentUsername ?? "User",
+                                    status: .online
+                                )
+                            case .failure(let error):
+                                errorMessage = error
+                                showError = true
+                            }
+                        }
                     }
                 case .failure(let error):
                     errorMessage = error.localizedDescription

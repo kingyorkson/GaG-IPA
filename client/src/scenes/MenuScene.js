@@ -243,9 +243,9 @@ export class MenuScene extends Phaser.Scene {
     }
 
     const qrDataUrl = await QRCode.toDataURL(token, {
-      width: 256,
-      margin: 2,
-      color: { dark: '#4ecca3', light: '#1a1a2e' },
+        width: 320,
+        margin: 4,
+        color: { dark: '#000000', light: '#ffffff' },
     });
 
     const qrImg = this.add.image(GAME_WIDTH / 2, py + 170, 'qr_temp');
@@ -257,7 +257,7 @@ export class MenuScene extends Phaser.Scene {
       if (this.textures.exists('qr_temp')) this.textures.remove('qr_temp');
       this.textures.addImage('qr_temp', tempImg);
       qrImg.setTexture('qr_temp');
-      qrImg.setDisplaySize(220, 220);
+        qrImg.setDisplaySize(260, 260);
     };
 
     const hint = this.add.text(GAME_WIDTH / 2, py + 300, 'Open G&G Mobile on your iPhone\nand tap Scan QR Code', {
