@@ -199,11 +199,23 @@ CREATE INDEX IF NOT EXISTS idx_calls_from ON calls(from_user_id);
 CREATE INDEX IF NOT EXISTS idx_calls_to ON calls(to_user_id);
 
 -- Enable realtime for chat, call, and multiplayer tables
-ALTER PUBLICATION supabase_realtime ADD TABLE servers;
-ALTER PUBLICATION supabase_realtime ADD TABLE friends;
-ALTER PUBLICATION supabase_realtime ADD TABLE friend_requests;
-ALTER PUBLICATION supabase_realtime ADD TABLE messages;
-ALTER PUBLICATION supabase_realtime ADD TABLE calls;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'servers') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE servers;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'friends') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE friends;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'friend_requests') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE friend_requests;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'messages') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE messages;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'calls') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE calls;
+  END IF;
+END $$;
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_profiles_username ON profiles(username);
