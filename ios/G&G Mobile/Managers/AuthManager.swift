@@ -33,6 +33,19 @@ class AuthManager: ObservableObject {
         return true
     }
 
+    func signInWithDiscord() async -> Bool {
+        guard let tokens = await supabase.signInWithDiscord() else { return false }
+        guard let user = await supabase.fetchUser(accessToken: tokens.accessToken) else { return false }
+
+        await MainActor.run {
+            self.currentUserId = user.id
+            self.currentUsername = user.username
+            self.isSignedIn = true
+            self.saveAccount(id: user.id, username: user.username, token: tokens.accessToken)
+        }
+        return true
+    }
+
     func signInWithQRCode(token: String) async -> Bool {
         let result = await supabase.authenticateWithQR(token: token)
         await MainActor.run {

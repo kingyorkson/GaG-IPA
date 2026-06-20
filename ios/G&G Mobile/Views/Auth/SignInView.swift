@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SignInView: View {
     @EnvironmentObject var appState: AppState
+    @State private var showSignInMenu = false
     @State private var showQRScanner = false
     @State private var isSigningIn = false
     @State private var showError = false
@@ -17,30 +18,20 @@ struct SignInView: View {
                 .frame(width: 70, height: 70)
                 .foregroundColor(Color(hex: "4ecca3"))
 
-            Text("Finally, to use this application\nyou must sign in with your\nDiscord / Guest account.")
-                .font(.title3)
+            Text("Growing & Gardening")
+                .font(.title)
                 .foregroundColor(.white)
-                .multilineTextAlignment(.center)
+                .fontWeight(.bold)
+
+            Text("Sign in to continue")
+                .font(.title3)
+                .foregroundColor(Color(hex: "aaaaaa"))
 
             VStack(spacing: 16) {
-                Button(action: signInAsGuest) {
+                Button(action: { showSignInMenu = true }) {
                     HStack {
-                        Image(systemName: "person.fill")
-                        Text("Continue as Guest")
-                    }
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color(hex: "2d2d44"))
-                    .cornerRadius(14)
-                }
-                .disabled(isSigningIn)
-
-                Button(action: { showQRScanner = true }) {
-                    HStack {
-                        Image(systemName: "qrcode.viewfinder")
-                        Text("Scan QR Code")
+                        Image(systemName: "arrow.right.circle.fill")
+                        Text("Sign In")
                     }
                     .font(.headline)
                     .foregroundColor(.white)
@@ -52,6 +43,22 @@ struct SignInView: View {
                 .disabled(isSigningIn)
             }
             .padding(.horizontal, 40)
+            .confirmationDialog("Sign in with...", isPresented: $showSignInMenu, titleVisibility: .visible) {
+                Button("Guest Account") { signInAsGuest() }
+                Button("Discord") { signInWithDiscord() }
+                Button("Cancel", role: .cancel) {}
+            }
+
+            Button(action: { showQRScanner = true }) {
+                HStack {
+                    Image(systemName: "qrcode.viewfinder")
+                    Text("Scan QR Code")
+                }
+                .font(.subheadline)
+                .foregroundColor(Color(hex: "4ecca3"))
+                .padding(.vertical, 8)
+            }
+            .disabled(isSigningIn)
 
             if isSigningIn {
                 ProgressView()
@@ -60,13 +67,6 @@ struct SignInView: View {
             }
 
             Spacer()
-
-            Text("Discord sign-in is available on Web/Windows.\nUse QR Code to link your account.")
-                .font(.caption)
-                .foregroundColor(Color(hex: "888888"))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-                .padding(.bottom, 40)
         }
         .background(Color(hex: "0f0f23").ignoresSafeArea())
         .sheet(isPresented: $showQRScanner) {
@@ -102,6 +102,27 @@ struct SignInView: View {
                         username: appState.authManager.currentUsername ?? "Guest",
                         status: .online
                     )
+                }
+            }
+        }
+    }
+
+    func signInWithDiscord() {
+        isSigningIn = true
+        Task {
+            let success = await appState.authManager.signInWithDiscord()
+            await MainActor.run {
+                isSigningIn = false
+                if success {
+                    appState.isLoggedIn = true
+                    appState.currentUser = User(
+                        id: appState.authManager.currentUserId ?? UUID().uuidString,
+                        username: appState.authManager.currentUsername ?? "DiscordUser",
+                        status: .online
+                    )
+                } else {
+                    errorMessage = "Discord sign-in failed or was cancelled"
+                    showError = true
                 }
             }
         }

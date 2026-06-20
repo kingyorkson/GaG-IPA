@@ -1,6 +1,7 @@
 import Foundation
+import AuthenticationServices
 
-class SupabaseClient {
+class SupabaseClient: NSObject {
     static let shared = SupabaseClient()
 
     private let baseURL = "https://cqohfidpjiudduoqcppv.supabase.co"
@@ -95,5 +96,63 @@ class SupabaseClient {
         } catch {
             return false
         }
+    }
+
+    func signInWithDiscord() async -> (accessToken: String, refreshToken: String)? {
+        let authURL = "\(baseURL)/auth/v1/authorize?provider=discord&redirect_to=gag-mobile://auth/callback"
+        guard let url = URL(string: authURL) else { return nil }
+
+        return await withCheckedContinuation { continuation in
+            let session = ASWebAuthenticationSession(url: url, callbackURLScheme: "gag-mobile") { callbackURL, error in
+                if let error = error {
+                    print("Discord auth error: \(error.localizedDescription)")
+                    continuation.resume(returning: nil)
+                    return
+                }
+                guard let callbackURL = callbackURL,
+                      let fragment = callbackURL.fragment else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                let params = fragment.split(separator: "&").reduce(into: [String: String]()) { dict, pair in
+                    let kv = pair.split(separator: "=", maxSplits: 1).map(String.init)
+                    dict[kv[0]] = kv.count > 1 ? kv[1] : ""
+                }
+                guard let at = params["access_token"], let rt = params["refresh_token"] else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                continuation.resume(returning: (at, rt))
+            }
+            session.presentationContextProvider = self
+            session.prefersEphemeralWebBrowserSession = true
+            session.start()
+        }
+    }
+
+    func fetchUser(accessToken: String) async -> (id: String, username: String)? {
+        let url = URL(string: "\(baseURL)/auth/v1/user")!
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+
+        do {
+            let (data, _) = try await URLSession.shared.data(for: request)
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let id = json["id"] as? String else { return nil }
+            let meta = json["user_metadata"] as? [String: Any]
+            let username = meta?["full_name"] as? String ?? meta?["user_name"] as? String ?? "DiscordUser"
+            return (id, username)
+        } catch {
+            return nil
+        }
+    }
+}
+
+extension SupabaseClient: ASWebAuthenticationPresentationContextProviding {
+    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow } ?? UIWindow()
     }
 }
