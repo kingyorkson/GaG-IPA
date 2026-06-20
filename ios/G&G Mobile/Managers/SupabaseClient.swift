@@ -130,6 +130,77 @@ class SupabaseClient: NSObject {
         }
     }
 
+    func createGuestAccount(username: String, password: String, deviceId: String) async -> (accessToken: String, refreshToken: String)? {
+        let email = "\(username)@guest.growinggardening.game"
+        guard let url = URL(string: "\(baseURL)/auth/v1/signup") else { return nil }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(anonKey, forHTTPHeaderField: "apikey")
+        let body: [String: Any] = [
+            "email": email,
+            "password": password,
+            "data": ["username": username, "auth_type": "guest"]
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        do {
+            let (data, _) = try await URLSession.shared.data(for: request)
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+            if let id = json["id"] as? String {
+                let at = json["access_token"] as? String ?? ""
+                let rt = json["refresh_token"] as? String ?? ""
+                await upsertUser(id: id, username: username, authType: "guest")
+                return (at, rt)
+            }
+            return nil
+        } catch {
+            return nil
+        }
+    }
+
+    func signInGuest(username: String, password: String) async -> (accessToken: String, refreshToken: String, userId: String)? {
+        let email = "\(username)@guest.growinggardening.game"
+        guard let url = URL(string: "\(baseURL)/auth/v1/token?grant_type=password") else { return nil }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(anonKey, forHTTPHeaderField: "apikey")
+        let body = ["email": email, "password": password]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        do {
+            let (data, _) = try await URLSession.shared.data(for: request)
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let at = json["access_token"] as? String,
+                  let rt = json["refresh_token"] as? String,
+                  let user = json["user"] as? [String: Any],
+                  let id = user["id"] as? String else { return nil }
+            return (at, rt, id)
+        } catch {
+            return nil
+        }
+    }
+
+    private func upsertUser(id: String, username: String, authType: String) async {
+        guard let url = URL(string: "\(baseURL)/rest/v1/users?on_conflict=id") else { return }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(anonKey, forHTTPHeaderField: "apikey")
+        request.setValue("resolution=merge-duplicates", forHTTPHeaderField: "Prefer")
+        let body: [String: Any] = [
+            "id": id,
+            "username": username,
+            "auth_type": authType,
+            "cash": 100,
+            "inventory": [],
+            "garden_data": [:]
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        let _ = try? await URLSession.shared.data(for: request)
+    }
+
     func fetchUser(accessToken: String) async -> (id: String, username: String)? {
         let url = URL(string: "\(baseURL)/auth/v1/user")!
         var request = URLRequest(url: url)

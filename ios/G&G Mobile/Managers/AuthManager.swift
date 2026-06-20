@@ -16,19 +16,43 @@ class AuthManager: ObservableObject {
     private let supabase = SupabaseClient.shared
     private let defaults = UserDefaults.standard
     private let accountsKey = "saved_accounts"
+    private let guestKey = "stored_guest"
 
     init() {
         loadSavedAccounts()
     }
 
     func signInAsGuest() async -> Bool {
-        let guestId = UUID().uuidString
-        let username = "Guest_\(guestId.prefix(6))"
+        if let stored = defaults.dictionary(forKey: guestKey) as? [String: String],
+           let user = stored["username"],
+           let pass = stored["password"] {
+            if let result = await supabase.signInGuest(username: user, password: pass) {
+                await MainActor.run {
+                    self.currentUserId = result.userId
+                    self.currentUsername = user
+                    self.isSignedIn = true
+                    self.saveAccount(id: result.userId, username: user, token: result.accessToken)
+                }
+                return true
+            }
+        }
+
+        let newId = UUID().uuidString
+        let username = "Guest_\(String(newId.prefix(6)))"
+        let password = "Guest_\(newId.replacingOccurrences(of: "-", with: ""))!Aa1"
+        let deviceId = newId
+
+        guard let result = await supabase.createGuestAccount(username: username, password: password, deviceId: deviceId) else {
+            return false
+        }
+
+        defaults.set(["username": username, "password": password], forKey: guestKey)
 
         await MainActor.run {
-            self.currentUserId = guestId
-            self.currentUsername = String(username)
+            self.currentUserId = newId
+            self.currentUsername = username
             self.isSignedIn = true
+            self.saveAccount(id: newId, username: username, token: result.accessToken)
         }
         return true
     }
