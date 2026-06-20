@@ -614,26 +614,26 @@ export class AuthScene extends Phaser.Scene {
   }
 
   showProgressBar(text) {
-    if (this.progressContainer) this.hideProgressBar();
-    this.progressContainer = this.add.container(0, 0);
+    if (this.progressBg) this.hideProgressBar();
     const pw = 300, ph = 60;
     const px = (GAME_WIDTH - pw) / 2, py = GAME_HEIGHT - 80;
 
-    const bg = this.add.graphics();
-    bg.fillStyle(0x000000, 0.8);
-    bg.fillRoundedRect(px - 10, py - 10, pw + 20, ph + 20, 10);
+    this.progressBg = this.add.graphics();
+    this.progressBg.fillStyle(0x000000, 0.8);
+    this.progressBg.fillRoundedRect(px - 10, py - 10, pw + 20, ph + 20, 10);
 
-    const progressText = this.add.text(GAME_WIDTH / 2, py + 10, text, {
+    this.progressText = this.add.text(GAME_WIDTH / 2, py + 10, text, {
       fontSize: '14px', color: '#ffffff', fontFamily: 'Arial',
     }).setOrigin(0.5);
 
     this.progressBar = new ProgressBar(this, px, py + 25, pw, 15, COLORS.progressBarFill);
-    this.progressContainer.add([bg, progressText, this.progressBar]);
     this.progressBar.startFill(2000);
   }
 
   hideProgressBar() {
-    if (this.progressContainer) { this.progressContainer.destroy(); this.progressContainer = null; }
+    if (this.progressBg) { this.progressBg.destroy(); this.progressBg = null; }
+    if (this.progressText) { this.progressText.destroy(); this.progressText = null; }
+    if (this.progressBar) { this.progressBar.destroy(); this.progressBar = null; }
   }
 
   progressComplete(callback) {
