@@ -429,16 +429,42 @@ export class AuthScene extends Phaser.Scene {
 
     this.showProgressBar('Waiting for Discord...');
 
+    this.browser = new InAppBrowser();
+    this.waitingForDiscord = true;
+
+    if (this.browser.isElectron) {
+      const flow = await this.browser.startExternalFlow(supabase);
+      if (!flow.success) {
+        this.hideProgressBar();
+        this.showError(flow.error || 'Discord auth failed');
+        return;
+      }
+      if (flow.hash) {
+        const q = new URLSearchParams(flow.hash.replace('#', '?'));
+        const at = q.get('access_token');
+        const rt = q.get('refresh_token');
+        if (at && rt) {
+          await supabase.auth.setSession({ access_token: at, refresh_token: rt });
+        }
+        this.handleDiscordCallback();
+      } else {
+        this.hideProgressBar();
+        this.showError('Authentication was cancelled');
+      }
+      return;
+    }
+
+    const popup = window.open('', '_blank');
+
     const result = await this.authSystem.loginWithDiscord();
     if (!result.success) {
+      if (popup && !popup.closed) popup.close();
       this.hideProgressBar();
       this.showError(result.error || 'Failed to start Discord auth');
       return;
     }
 
-    this.browser = new InAppBrowser();
-    this.waitingForDiscord = true;
-    const hash = await this.browser.open(result.url);
+    const hash = await this.browser.open(result.url, popup);
 
     if (hash) {
       const q = new URLSearchParams(hash.replace('#', '?'));

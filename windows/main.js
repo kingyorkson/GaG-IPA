@@ -66,19 +66,16 @@ function getRandomPort() {
 }
 
 function setupAuthHandlers() {
-  ipcMain.handle('open-auth-url', async (event, url) => {
-    if (authTimer) clearTimeout(authTimer);
+  ipcMain.handle('start-auth-server', async () => {
     stopAuthServer();
-
     const port = await getRandomPort();
     const callbackUrl = `http://127.0.0.1:${port}/auth/callback.html`;
-    const modifiedUrl = url.replace(/(redirect_to=)[^&]*/, '$1' + encodeURIComponent(callbackUrl));
 
     return new Promise((resolve) => {
-      authResolve = resolve;
+      authResolve = null;
       authTimer = setTimeout(() => {
         stopAuthServer();
-        resolve('');
+        resolve({ callbackUrl: '', error: 'timeout' });
       }, 120000);
 
       authServer = http.createServer((req, res) => {
@@ -90,7 +87,7 @@ function setupAuthHandlers() {
           res.writeHead(200, { 'Content-Type': 'text/plain' });
           res.end('ok');
           stopAuthServer();
-          resolve(hash);
+          if (authResolve) authResolve(hash);
         } else {
           res.writeHead(404);
           res.end();
@@ -98,9 +95,24 @@ function setupAuthHandlers() {
       });
 
       authServer.listen(port, '127.0.0.1', () => {
-        shell.openExternal(modifiedUrl);
+        resolve({ callbackUrl });
       });
     });
+  });
+
+  ipcMain.handle('wait-for-auth-hash', async () => {
+    clearTimeout(authTimer);
+    return new Promise((resolve) => {
+      authResolve = resolve;
+      authTimer = setTimeout(() => {
+        stopAuthServer();
+        resolve('');
+      }, 120000);
+    });
+  });
+
+  ipcMain.handle('open-external-url', async (event, url) => {
+    shell.openExternal(url);
   });
 
   ipcMain.on('close-auth-server', () => {

@@ -5,29 +5,47 @@ export class InAppBrowser {
     this.authResolve = null;
   }
 
-  open(url) {
+  open(url, existingPopup) {
     return new Promise((resolve) => {
       this.authResolve = resolve;
-      if (this.isElectron) {
-        this.openExternal(url);
-      } else if (this.isIOS) {
+      if (this.isIOS) {
         this.openIOS(url);
       } else {
-        this.openTab(url);
+        this.openTab(url, existingPopup);
       }
     });
   }
 
-  openExternal(url) {
+  async startExternalFlow(supabase) {
     window.electronAPI.minimizeWindow();
-    window.electronAPI.openAuthUrl(url).then((hash) => {
+
+    const result = await window.electronAPI.startAuthServer();
+    if (!result || !result.callbackUrl) {
       window.electronAPI.restoreWindow();
-      this.resolve(hash);
+      return { success: false, error: 'Could not start auth server' };
+    }
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'discord',
+      options: { redirectTo: result.callbackUrl },
     });
+    if (error || !data?.url) {
+      window.electronAPI.closeAuthUrl();
+      window.electronAPI.restoreWindow();
+      return { success: false, error: error?.message || 'Failed to get Discord auth URL' };
+    }
+
+    window.electronAPI.openExternalUrl(data.url);
+
+    const hash = await window.electronAPI.waitForAuthHash();
+    window.electronAPI.restoreWindow();
+    return { success: true, hash };
   }
 
-  openTab(url) {
-    const popup = window.open(url, '_blank');
+  openTab(url, existingPopup) {
+    const popup = existingPopup || window.open(url, '_blank');
+    if (!popup) { this.resolve(''); return; }
+    if (existingPopup && url) popup.location.href = url;
     const handler = (event) => {
       if (event.data?.type === 'supabase-auth' && event.origin === window.location.origin) {
         window.removeEventListener('message', handler);
