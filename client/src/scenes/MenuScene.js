@@ -480,8 +480,31 @@ export class MenuScene extends Phaser.Scene {
   }
 
   openFriendsMenu() {
-    if (!this.currentUser) return;
-    this.scene.start('TabletScene', { section: 'friends', user: this.currentUser });
+    const overlay = this.add.graphics().setDepth(DEPTH.OVERLAY);
+    overlay.fillStyle(0x0f0f23, 1);
+    overlay.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+    const titleText = this.add.text(GAME_WIDTH / 2, 60, 'Friends', {
+      fontSize: '28px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(DEPTH.OVERLAY + 10);
+
+    const friends = this.currentUser?.friends || [];
+    let yOff = 120;
+    if (friends.length === 0) {
+      this.add.text(GAME_WIDTH / 2, yOff, this.currentUser ? 'No friends yet.' : 'Sign in to see your friends.', {
+        fontSize: '18px', color: '#888888', fontFamily: 'Arial',
+      }).setOrigin(0.5).setDepth(DEPTH.OVERLAY + 10);
+    } else {
+      friends.forEach((f, i) => {
+        this.add.text(GAME_WIDTH / 2, yOff + i * 40, f.username || f.name || `Friend ${i + 1}`, {
+          fontSize: '18px', color: '#ffffff', fontFamily: 'Arial',
+        }).setOrigin(0.5).setDepth(DEPTH.OVERLAY + 10);
+      });
+    }
+
+    const backBtn = new RecolorableButton(this, GAME_WIDTH / 2 - 80, GAME_HEIGHT - 80, 160, 45, 'Back', COLORS.danger, () => {
+      this.cleanupOverlay([overlay, titleText, backBtn]);
+    });
   }
 
   showMessage(msg) {
