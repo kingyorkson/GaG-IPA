@@ -32,23 +32,9 @@ class AppState: ObservableObject {
     }
 
     func loadDemoData() {
-        friends = [
-            User(id: "user1", username: "GardenerMike", status: .online),
-            User(id: "user2", username: "FlowerQueen", status: .online),
-            User(id: "user3", username: "TreeHugger", status: .idle),
-            User(id: "user4", username: "SeedPlanter", status: .offline),
-            User(id: "user5", username: "HarvestKing", status: .online),
-            User(id: "user6", username: "BloomMaster", status: .idle),
-        ]
-        chatGroups = [
-            ChatGroup(id: "group1", name: "Garden Club", members: ["user1", "user2", "user4"]),
-            ChatGroup(id: "group2", name: "Rare Seeds Team", members: ["user1", "user3", "user5", "user6"]),
-        ]
-        servers = [
-            Server(id: "srv1", name: "Verdant Valley", memberCount: 24, playerCount: 8),
-            Server(id: "srv2", name: "Sunflower Fields", memberCount: 56, playerCount: 12),
-            Server(id: "srv3", name: "Mushroom Grove", memberCount: 13, playerCount: 3),
-        ]
+        friends = []
+        chatGroups = []
+        servers = []
     }
 
     func completeOnboarding() {

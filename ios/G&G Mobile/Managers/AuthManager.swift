@@ -16,9 +16,21 @@ class AuthManager: ObservableObject {
     private let defaults = UserDefaults.standard
     private let accountsKey = "saved_accounts"
     private let guestKey = "stored_guest"
+    private let lastActiveIdKey = "last_active_account_id"
 
     init() {
         loadSavedAccounts()
+        restoreLastActiveAccount()
+    }
+
+    func restoreLastActiveAccount() {
+        guard let lastId = defaults.string(forKey: lastActiveIdKey),
+              let account = savedAccounts.first(where: { $0.userId == lastId }) else { return }
+        switchToAccount(account)
+    }
+
+    private func setLastActive(_ userId: String) {
+        defaults.set(userId, forKey: lastActiveIdKey)
     }
 
     func signInAsGuest() async -> Bool {
@@ -31,6 +43,7 @@ class AuthManager: ObservableObject {
                     self.currentUsername = user
                     self.isSignedIn = true
                     self.saveAccount(id: result.userId, username: user, token: result.accessToken)
+                    self.setLastActive(result.userId)
                 }
                 return true
             }
@@ -52,6 +65,7 @@ class AuthManager: ObservableObject {
             self.currentUsername = username
             self.isSignedIn = true
             self.saveAccount(id: newId, username: username, token: result.accessToken)
+            self.setLastActive(newId)
         }
         return true
     }
@@ -65,6 +79,7 @@ class AuthManager: ObservableObject {
             self.currentUsername = user.username
             self.isSignedIn = true
             self.saveAccount(id: user.id, username: user.username, token: tokens.accessToken)
+            self.setLastActive(user.id)
         }
         return true
     }
@@ -78,6 +93,7 @@ class AuthManager: ObservableObject {
                 self.currentUsername = user.username
                 self.isSignedIn = true
                 self.saveAccount(id: user.id, username: user.username, token: code)
+                self.setLastActive(user.id)
             }
             return .success(())
         case .failure(let error):
@@ -89,12 +105,14 @@ class AuthManager: ObservableObject {
         currentUserId = account.userId
         currentUsername = account.username
         isSignedIn = true
+        setLastActive(account.userId)
     }
 
     func logout() {
         currentUserId = nil
         currentUsername = nil
         isSignedIn = false
+        defaults.removeObject(forKey: lastActiveIdKey)
     }
 
     func saveAccount(id: String, username: String, token: String) {
