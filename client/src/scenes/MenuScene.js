@@ -87,11 +87,8 @@ export class MenuScene extends Phaser.Scene {
     });
 
     this.multiplayerBtn = new RecolorableButton(this, btnX, titleY + 175, btnW, btnH, 'Multiplayer', COLORS.buttonGray, () => {
-      if (this.currentUser) {
-        this.openMultiplayerMenu();
-      }
+      this.openMultiplayerMenu();
     });
-    this.multiplayerBtn.setDisabled(true);
 
     this.friendsBtn = new RecolorableButton(this, btnX, titleY + 250, btnW, btnH, 'Friends', COLORS.buttonGray, () => {
       this.openFriendsMenu();
