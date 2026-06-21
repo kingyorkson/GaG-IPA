@@ -42,11 +42,12 @@ class SupabaseClient: NSObject {
                 let body = String(data: data, encoding: .utf8) ?? "unknown"
                 return .failure(.serverError("Server error \(httpResponse.statusCode): \(body)"))
             }
-            let body = String(data: data, encoding: .utf8) ?? ""
-            guard body != "null", !body.isEmpty else {
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let id = json["id"] as? String,
+                  let username = json["username"] as? String else {
                 return .failure(.serverError("Code expired or invalid"))
             }
-            let user = try JSONDecoder().decode(User.self, from: data)
+            let user = User(id: id, username: username, status: .online)
             return .success(user)
         } catch {
             return .failure(.serverError(error.localizedDescription))
